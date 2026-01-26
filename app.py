@@ -1,11 +1,14 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-from src.data_loader import load_market_data
-from src.analytics import compute_log_returns, simulate_returns
+import pandas as pd
+from src.marketstack_loader import load_marketstack_data, load_multiple_marketstack_data
+from src.analytics import compute_log_returns, simulate_returns,compute_portfolio_returns 
 from src.payoff import call_payoff, portfolio_pnl, stock_payoff, put_payoff
 from src.risk import var, expected_shortfall
 
+import os
+API_KEY = os.getenv("MARKETSTACK_API_KEY")
 
 # TITOLO
 st.title("Dashboard finanziaria – Monte Carlo")
@@ -19,6 +22,84 @@ S0 = st.number_input("Prezzo iniziale dell'asset", value=100.0)
 mu = st.number_input("Rendimento medio annuo", value=0.05)
 sigma = st.number_input("Volatilità annua", value=0.2)
 n_sims = st.number_input("Numero simulazioni", value=10000, step=1000)
+
+import datetime as dt
+
+st.sidebar.header('Dati di mercato')
+symbol = st.sidebar.text_input('Ticker', value = 'AAPL')
+start_date = st.sidebar.date_input(
+    'Data inizio',
+    value = dt.date(2020,1,1)
+)
+
+end_date = st.sidebar.date_input(
+    'Data fine',
+    value = dt.date.today()
+)
+
+df =load_marketstack_data(
+    API_KEY,
+    symbol,
+    start_date.strftime("%Y-%m-%d"),
+    end_date.strftime("%Y-%m-%d")
+)
+
+st.header('Posizioni di portafoglio')
+
+positions_df = st.data_editor(
+    pd.DataFrame({
+        'Ticker':["META","NVDA"],
+        'Quantità': [150,200]
+    }),
+    num_rows = 'dynamic'
+)
+symbols = [s.strip().upper() for s in positions_df['Ticker'].tolist()]
+quantities = positions_df['Quantità'].values
+
+price_data = load_multiple_marketstack_data(
+    API_KEY,
+    symbols,
+    start_date.strftime('%Y-%m-%d'),
+    end_date.strftime('%Y-%m-%d')
+)
+
+latest_prices = {
+    symbol: df['close'].iloc[-1]
+    for symbol, df in price_data.items()
+}
+
+portfolio_value = sum(
+    latest_prices[symbol]*qty
+    for symbol, qty in zip(symbols, quantities)
+)
+
+st.metric('Valore attuale del portafoglio',f"{portfolio_value:,.2f} €")
+
+returns = compute_log_returns(df['close'])
+
+weights = {
+    symbol: (latest_prices[symbol]*qty)/portfolio_value
+    for symbol,qty in zip (symbols, quantities)
+}
+
+portfolio_returns = compute_portfolio_returns(price_data, weights)
+
+mu = portfolio_returns.mean()
+sigma = portfolio_returns.std()
+
+simulated_returns = np.random.normal(mu, sigma, int(n_sims))
+portfolio_values_T = portfolio_value * np.exp(simulated_returns)
+pnl_portfolio = portfolio_values_T - portfolio_value
+
+fig, ax = plt.subplots()
+ax.hist(pnl_portfolio, bins=50)
+ax.set_title("Distribuzione P&L Portafoglio")
+ax.set_xlabel("P&L")
+ax.set_ylabel("Frequenza")
+st.pyplot(fig)
+
+mu = returns.mean()
+sigma = returns.std()
 
 # SIMULAZIONE MONTE CARLO
 st.header("Simulazione")
@@ -64,7 +145,7 @@ pnl_call = call_payoff(S_T, K, premium)
 pnl_put = put_payoff(S_T, K, premium)
 
 #pesi degli strumenti (short se negativo)
-w_stock = st.slider('Peso AZione', -2.0, 2.0,1.0)
+w_stock = st.slider('Peso Azione', -2.0, 2.0,1.0)
 w_call = st.slider('Peso Call',-2.0, 2.0,1.0)
 w_put = st.slider('Peso Put', -2.0, 2.0,1.0)
 
