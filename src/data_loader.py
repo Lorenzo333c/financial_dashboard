@@ -1,9 +1,6 @@
 import pandas as pd
 import yfinance as yf
 
-import yfinance as yf
-import pandas as pd
-
 def load_yahoo_data(symbol, start_date, end_date):
         
     df = yf.download(
@@ -12,12 +9,17 @@ def load_yahoo_data(symbol, start_date, end_date):
         end=end_date,
         progress=False
     )
+    if df.empty:
+        return df
 
     df = df.reset_index()
+
+#normalizzare nomi delle colonne
     df.columns = [c.lower() for c in df.columns]
 
     return df
 
+#scaricare dati da YF, più ticker alla volta
 def load_multiple_yahoo_data(symbols, start_date, end_date):
     
     data = {}
