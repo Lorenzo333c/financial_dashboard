@@ -2,13 +2,10 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from src.marketstack_loader import load_marketstack_data, load_multiple_marketstack_data
 from src.analytics import compute_log_returns, simulate_returns,compute_portfolio_returns 
 from src.payoff import call_payoff, portfolio_pnl, stock_payoff, put_payoff
 from src.risk import var, expected_shortfall
-
-import os
-API_KEY = os.getenv("MARKETSTACK_API_KEY")
+from src.data_loader import load_yahoo_data, load_multiple_yahoo_data
 
 # TITOLO
 st.title("Dashboard finanziaria – Monte Carlo")
@@ -25,62 +22,52 @@ n_sims = st.number_input("Numero simulazioni", value=10000, step=1000)
 
 import datetime as dt
 
-st.sidebar.header('Dati di mercato')
-symbol = st.sidebar.text_input('Ticker', value = 'AAPL')
-start_date = st.sidebar.date_input(
-    'Data inizio',
-    value = dt.date(2020,1,1)
-)
+st.sidebar.header("Dati di mercato")
 
-end_date = st.sidebar.date_input(
-    'Data fine',
-    value = dt.date.today()
-)
+start_date = st.sidebar.date_input("Data inizio")
+end_date = st.sidebar.date_input("Data fine")
 
-df =load_marketstack_data(
-    API_KEY,
-    symbol,
-    start_date.strftime("%Y-%m-%d"),
-    end_date.strftime("%Y-%m-%d")
-)
-
-st.header('Posizioni di portafoglio')
+st.header("Posizioni di portafoglio")
 
 positions_df = st.data_editor(
     pd.DataFrame({
-        'Ticker':["META","NVDA"],
-        'Quantità': [150,200]
+        "Ticker": ["META", "NVDA"],
+        "Quantità": [150, 200]
     }),
-    num_rows = 'dynamic'
+    num_rows="dynamic"
 )
-symbols = [s.strip().upper() for s in positions_df['Ticker'].tolist()]
-quantities = positions_df['Quantità'].values
-
-price_data = load_multiple_marketstack_data(
-    API_KEY,
+price_data = load_multiple_yahoo_data(
     symbols,
-    start_date.strftime('%Y-%m-%d'),
-    end_date.strftime('%Y-%m-%d')
+    start_date,
+    end_date
 )
 
 latest_prices = {
-    symbol: df['close'].iloc[-1]
+    symbol: df["close"].iloc[-1]
     for symbol, df in price_data.items()
 }
 
 portfolio_value = sum(
-    latest_prices[symbol]*qty
-    for symbol, qty in zip(symbols, quantities)
+    latest_prices[s] * q
+    for s, q in zip(symbols, quantities)
 )
+
+st.metric("Valore attuale del portafoglio", f"{portfolio_value:,.2f} €")
+
+positions_df = positions_df.dropna()
+positions_df["Ticker"] = positions_df["Ticker"].str.strip().str.upper()
+positions_df["Quantità"] = positions_df["Quantità"].astype(float)
+
+symbols = positions_df["Ticker"].tolist()
+quantities = positions_df["Quantità"].values
+
+weights = {
+    s: (latest_prices[s] * q) / portfolio_value
+    for s, q in zip(symbols, quantities)}
 
 st.metric('Valore attuale del portafoglio',f"{portfolio_value:,.2f} €")
 
 returns = compute_log_returns(df['close'])
-
-weights = {
-    symbol: (latest_prices[symbol]*qty)/portfolio_value
-    for symbol,qty in zip (symbols, quantities)
-}
 
 portfolio_returns = compute_portfolio_returns(price_data, weights)
 
@@ -97,9 +84,6 @@ ax.set_title("Distribuzione P&L Portafoglio")
 ax.set_xlabel("P&L")
 ax.set_ylabel("Frequenza")
 st.pyplot(fig)
-
-mu = returns.mean()
-sigma = returns.std()
 
 # SIMULAZIONE MONTE CARLO
 st.header("Simulazione")
