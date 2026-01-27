@@ -1,8 +1,7 @@
 import pandas as pd
 import yfinance as yf
 
-def load_yahoo_data(symbol, start_date, end_date):
-        
+def load_yahoo_data(symbol, start_date, end_date):   
     df = yf.download(
         symbol,
         start=start_date,
@@ -12,7 +11,6 @@ def load_yahoo_data(symbol, start_date, end_date):
     )
     if df.empty:
         return None
-
     df = df.reset_index()
 
 #normalizzare nomi delle colonne
