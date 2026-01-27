@@ -42,8 +42,15 @@ positions_df = positions_df.dropna()
 positions_df["Ticker"] = positions_df["Ticker"].str.strip().str.upper()
 positions_df["Quantità"] = positions_df["Quantità"].astype(float)
 
+valid_symbols = list(price_data.keys())
+
+positions_df = positions_df[
+    positions_df["Ticker"].isin(valid_symbols)
+]
+
 symbols = positions_df["Ticker"].tolist()
 quantities = positions_df["Quantità"].values
+
 
 #estrazione dati-input da yahoo
 price_data = load_multiple_yahoo_data(
@@ -51,12 +58,26 @@ price_data = load_multiple_yahoo_data(
     start_date,
     end_date
 )
+#questo if mi esce dal loop se non trova ticker su yf
+if len(price_data) == 0:
+    st.error("Nessun dato disponibile per i ticker selezionati.")
+    st.stop()
+
+valid_symbols = list(price_data.keys())
+
+positions_df = positions_df[
+    positions_df["Ticker"].isin(valid_symbols)
+]
+
+symbols = positions_df["Ticker"].tolist()
+quantities = positions_df["Quantità"].values
 
 latest_prices = {
-    s: df["close"].iloc[-1]
-    for s, df in price_data.items()
+    s: price_data[s]["close"].iloc[-1]
+    for s in symbols
 }
 
+#valore portafoglio
 portfolio_value = sum(
     latest_prices[s] * q
     for s, q in zip(symbols, quantities)
