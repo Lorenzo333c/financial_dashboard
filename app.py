@@ -17,9 +17,6 @@ st.header("Parametri di input")
 S0 = st.number_input("Prezzo iniziale dell'asset", value=100.0)
 n_sims = st.number_input("Numero simulazioni", value=10000, step=1000)
 
-
-
-
 #Date
 import datetime as dt
 st.sidebar.header("Dati di mercato")
@@ -50,7 +47,6 @@ positions_df = positions_df[
 
 symbols = positions_df["Ticker"].tolist()
 quantities = positions_df["Quantità"].values
-
 
 #estrazione dati-input da yahoo
 price_data = load_multiple_yahoo_data(
