@@ -7,16 +7,16 @@ def load_yahoo_data(symbol, start_date, end_date):
         symbol,
         start=start_date,
         end=end_date,
-        progress=False
+        progress=False,
+        auto_adjust=True
     )
     if df.empty:
-        return df
+        return None
 
     df = df.reset_index()
 
 #normalizzare nomi delle colonne
     df.columns = [c.lower() for c in df.columns]
-
     return df
 
 #scaricare dati da YF, più ticker alla volta
@@ -26,7 +26,7 @@ def load_multiple_yahoo_data(symbols, start_date, end_date):
 
     for symbol in symbols:
         df = load_yahoo_data(symbol, start_date, end_date)
-        if not df.empty:
+        if df is not None and "close" in df.columns:
             data[symbol] = df
 
     return data
