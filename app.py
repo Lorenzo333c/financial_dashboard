@@ -29,10 +29,6 @@ end_date = st.sidebar.date_input("Data fine")
 
 st.header("Posizioni di portafoglio")
 
-positions_df = positions_df.dropna()
-positions_df["Ticker"] = positions_df["Ticker"].str.strip().str.upper()
-positions_df["Quantità"] = positions_df["Quantità"].astype(float)
-
 symbols = positions_df["Ticker"].tolist()
 quantities = positions_df["Quantità"].values
 
@@ -58,6 +54,10 @@ portfolio_value = sum(
     latest_prices[s] * q
     for s, q in zip(symbols, quantities)
 )
+
+positions_df = positions_df.dropna()
+positions_df["Ticker"] = positions_df["Ticker"].str.strip().str.upper()
+positions_df["Quantità"] = positions_df["Quantità"].astype(float)
 
 st.metric("Valore attuale del portafoglio", f"{portfolio_value:,.2f} €")
 
