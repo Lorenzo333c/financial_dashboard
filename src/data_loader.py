@@ -11,9 +11,8 @@ def load_yahoo_data(symbol, start_date, end_date):
     )
     if df.empty:
         return None
-    return df
-
 #normalizzare nomi delle colonne
+    df = df.reset_index()
     df.columns = [c.lower() for c in df.columns]
     return df
 
