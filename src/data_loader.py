@@ -14,8 +14,13 @@ def load_yahoo_data(symbol, start_date, end_date):
 #normalizzare nomi delle colonne
     df = df.reset_index()
     df.columns = [c.lower() for c in df.columns]
-    return df
+    if "close" not in df.columns:
+        if "adj close" in df.columns:
+            df["close"] = df["adj close"]
+        else:
+            return None
 
+    return df
 #scaricare dati da YF, più ticker alla volta
 def load_multiple_yahoo_data(symbols, start_date, end_date):
     
