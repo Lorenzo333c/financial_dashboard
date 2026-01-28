@@ -20,8 +20,9 @@ n_sims = st.number_input("Numero simulazioni", value=10000, step=1000)
 #Date
 import datetime as dt
 st.sidebar.header("Dati di mercato")
-start_date = st.sidebar.date_input("Data inizio")
-end_date = st.sidebar.date_input("Data fine")
+end_date = st.sidebar.date_input("Data fine", dt.date.today())
+default_start = dt.date.today() - dt.timedelta(days=90)
+start_date = st.sidebar.date_input("Data inizio", default_start)
 
 #Portafoglio
 st.header("Posizioni di portafoglio")
