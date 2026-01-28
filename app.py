@@ -52,9 +52,9 @@ valid_symbols = list(price_data.keys())
 positions_df = positions_df[positions_df['Ticker'].isin(valid_symbols)]
 
 symbols = positions_df['Ticker'].tolist()
-quantities = positions_df['Quantità'].values()
+quantities = positions_df['Quantità'].values
 
-latest_prices = {s: price_data[s]['close'].iloc[-1] for s in symbol}
+latest_prices = {s: price_data[s]['close'].iloc[-1] for s in symbols}
 
 #valore portafoglio
 portfolio_value = sum(
