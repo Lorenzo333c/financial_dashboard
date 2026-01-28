@@ -42,7 +42,8 @@ positions_df["Quantità"] = positions_df["Quantità"].astype(float)
 #nuova
 symbols = positions_df["Ticker"].tolist()
 price_data = load_multiple_yahoo_data(symbols, start_date, end_date)
-
+for s, df in price_data.items():
+    st.write(s, df.columns.tolist())
 if not price_data:
     st.error("Nessun dato disponibile per i ticker selezionati.")
     st.stop()
