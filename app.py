@@ -49,7 +49,7 @@ if not price_data:
     st.stop()
 
 valid_symbols = list(price_data.keys())
-position_df = position_df[position_df['Ticker'].isin(valid_symbols)]
+position_df = positions_df[position_df['Ticker'].isin(valid_symbols)]
 
 symbols = positions_df['Ticker'].tolist()
 quantities = position_df['Quantità'].values()
