@@ -23,7 +23,7 @@ def load_multiple_yahoo_data(symbols, start_date, end_date):
 
     for symbol in symbols:
         df = load_yahoo_data(symbol, start_date, end_date)
-        if df is not None and "Close" in df.columns:
+        if df is not None and "close" in df.columns:
             data[symbol] = df
 
     return data
